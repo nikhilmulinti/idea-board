@@ -1,0 +1,62 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: idea-board
+  namespace: argocd
+spec:
+  description: Idea Board Application Project
+
+  # Source repositories
+  sourceRepos:
+    - https://github.com/nikhilmulinti/idea-board
+    - ghcr.io/nikhilmulinti/idea-board-*
+
+  # Destinations where apps can be deployed
+  destinations:
+    - namespace: 'idea-board-*'
+      server: https://kubernetes.default.svc
+    - namespace: 'argocd'
+      server: https://kubernetes.default.svc
+
+  # Cluster resource whitelist
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: 'Namespace'
+    - group: 'rbac.authorization.k8s.io'
+      kind: 'ClusterRole'
+    - group: 'rbac.authorization.k8s.io'
+      kind: 'ClusterRoleBinding'
+
+  # Namespace resource whitelist
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  # Roles for the project
+  roles:
+    - name: admin
+      description: Admin role for Idea Board project
+      policies:
+        - p, proj:idea-board:admin, applications, *, idea-board/*, allow
+        - p, proj:idea-board:admin, repositories, *, *, allow
+      groups:
+        - idea-board-admins
+
+    - name: developer
+      description: Developer role for Idea Board project
+      policies:
+        - p, proj:idea-board:developer, applications, get, idea-board/*, allow
+        - p, proj:idea-board:developer, applications, sync, idea-board/*, allow
+        - p, proj:idea-board:developer, applications, action/*, idea-board/*, allow
+        - p, proj:idea-board:developer, logs, get, idea-board/*, allow
+        - p, proj:idea-board:developer, exec, create, idea-board/*, allow
+      groups:
+        - idea-board-developers
+
+    - name: viewer
+      description: Read-only role for Idea Board project
+      policies:
+        - p, proj:idea-board:viewer, applications, get, idea-board/*, allow
+        - p, proj:idea-board:viewer, logs, get, idea-board/*, allow
+      groups:
+        - idea-board-viewers

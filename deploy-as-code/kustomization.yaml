@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: argocd
+
+resources:
+  # ArgoCD Project
+  - projects/idea-board-project.yaml
+
+  # ApplicationSets
+  - applicationsets/idea-board-appset.yaml
+  # Uncomment if using multi-cluster setup
+  # - applicationsets/idea-board-multi-cluster-appset.yaml
+
+  # App of Apps
+  - argocd-apps/app-of-apps.yaml
+
+# Common labels for all resources
+commonLabels:
+  app.kubernetes.io/part-of: idea-board
+  app.kubernetes.io/managed-by: argocd
+
+# Common annotations
+commonAnnotations:
+  managed-by: kustomize
+  repository: github.com/nikhilmulinti/idea-board

@@ -1,0 +1,112 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: idea-board-apps
+  namespace: argocd
+spec:
+  generators:
+    - matrix:
+        generators:
+          # List of environments
+          - list:
+              elements:
+                - env: dev
+                  cluster: https://kubernetes.default.svc
+                  namespace: idea-board-dev
+                  values: environments/dev.yaml
+                  branch: develop
+                  autoSync: true
+                  prune: true
+
+                - env: staging
+                  cluster: https://kubernetes.default.svc
+                  namespace: idea-board-staging
+                  values: environments/staging.yaml
+                  branch: main
+                  autoSync: true
+                  prune: true
+
+                - env: production
+                  cluster: https://kubernetes.default.svc
+                  namespace: idea-board-prod
+                  values: environments/production.yaml
+                  branch: main
+                  autoSync: false  # Manual sync for production
+                  prune: false
+
+          # List of services
+          - list:
+              elements:
+                - service: backend
+                  port: 8000
+                  healthCheck: /health
+
+                - service: frontend
+                  port: 80
+                  healthCheck: /
+
+  template:
+    metadata:
+      name: '{{service}}-{{env}}'
+      namespace: argocd
+      labels:
+        app.kubernetes.io/name: '{{service}}'
+        app.kubernetes.io/instance: '{{env}}'
+        app.kubernetes.io/component: '{{service}}'
+        app.kubernetes.io/part-of: idea-board
+        environment: '{{env}}'
+      annotations:
+        notifications.argoproj.io/subscribe.on-deployed.slack: deployments
+        notifications.argoproj.io/subscribe.on-health-degraded.slack: alerts
+        notifications.argoproj.io/subscribe.on-sync-failed.slack: alerts
+
+    spec:
+      project: idea-board
+
+      source:
+        repoURL: https://github.com/nikhilmulinti/idea-board
+        targetRevision: '{{branch}}'
+        path: config-as-code/helm/charts/{{service}}
+        helm:
+          valueFiles:
+            - ../../{{values}}
+          parameters:
+            - name: image.tag
+              value: '{{branch}}'
+            - name: namespace
+              value: '{{namespace}}'
+
+      destination:
+        server: '{{cluster}}'
+        namespace: '{{namespace}}'
+
+      syncPolicy:
+        {{- if eq "true" .autoSync }}
+        automated:
+          prune: {{prune}}
+          selfHeal: true
+          allowEmpty: false
+        {{- end }}
+        syncOptions:
+          - CreateNamespace=true
+          - RespectIgnoreDifferences=true
+          - ApplyOutOfSyncOnly=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
+
+      revisionHistoryLimit: 3
+
+      ignoreDifferences:
+        - group: apps
+          kind: Deployment
+          jsonPointers:
+            - /spec/replicas
+        - group: autoscaling
+          kind: HorizontalPodAutoscaler
+          jsonPointers:
+            - /spec/minReplicas
+            - /spec/maxReplicas

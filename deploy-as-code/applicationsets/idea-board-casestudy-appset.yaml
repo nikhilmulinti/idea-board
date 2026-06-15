@@ -1,0 +1,112 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: idea-board-casestudy
+  namespace: argocd
+spec:
+  generators:
+    - matrix:
+        generators:
+          # Environments - all in same cluster, different namespaces
+          - list:
+              elements:
+                - env: dev
+                  namespace: idea-board-dev
+                  branch: develop
+                  autoSync: true
+                  prune: true
+                  replicas: 1
+
+                - env: staging
+                  namespace: idea-board-staging
+                  branch: main
+                  autoSync: true
+                  prune: true
+                  replicas: 2
+
+                - env: prod
+                  namespace: idea-board-prod
+                  branch: main
+                  autoSync: false  # Manual approval for prod
+                  prune: false
+                  replicas: 3
+
+          # Services
+          - list:
+              elements:
+                - service: backend
+                  port: 8000
+                - service: frontend
+                  port: 80
+
+  template:
+    metadata:
+      name: 'idea-board-{{service}}-{{env}}'
+      namespace: argocd
+      labels:
+        app: idea-board
+        service: '{{service}}'
+        environment: '{{env}}'
+      annotations:
+        # For case study demos
+        demo.example.com/description: "{{service}} service for {{env}} environment"
+
+    spec:
+      project: default  # Use default for simplicity in case study
+
+      source:
+        repoURL: https://github.com/nikhilmulinti/idea-board
+        targetRevision: '{{branch}}'
+        path: config-as-code/helm/charts/{{service}}
+        helm:
+          values: |
+            namespace: {{namespace}}
+            replicas: {{replicas}}
+            image:
+              tag: {{branch}}
+
+            # Environment-specific configs
+            {{- if eq .env "dev" }}
+            resources:
+              limits:
+                cpu: 200m
+                memory: 256Mi
+              requests:
+                cpu: 100m
+                memory: 128Mi
+            {{- else if eq .env "staging" }}
+            resources:
+              limits:
+                cpu: 400m
+                memory: 512Mi
+              requests:
+                cpu: 200m
+                memory: 256Mi
+            {{- else if eq .env "prod" }}
+            resources:
+              limits:
+                cpu: 800m
+                memory: 1Gi
+              requests:
+                cpu: 400m
+                memory: 512Mi
+            {{- end }}
+
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{namespace}}'
+
+      syncPolicy:
+        {{- if .autoSync }}
+        automated:
+          prune: {{prune}}
+          selfHeal: true
+        {{- end }}
+        syncOptions:
+          - CreateNamespace=true
+        retry:
+          limit: 3
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 1m
