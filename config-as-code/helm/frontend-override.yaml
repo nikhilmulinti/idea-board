@@ -1,0 +1,21 @@
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: simpletwist.dpdns.org
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: simpletwist-tls
+      hosts:
+        - simpletwist.dpdns.org
+
+env: |
+  - name: REACT_APP_API_URL
+    value: "https://simpletwist.dpdns.org/api"
+  - name: REACT_APP_ENVIRONMENT
+    value: "development"

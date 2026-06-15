@@ -13,7 +13,7 @@ backend:
 
   env: |
     - name: DATABASE_URL
-      value: "postgresql://ideauser:ChangeMeSecure123!@10.238.0.3:5432/ideaboard"
+      value: "postgresql://ideauser:ChangeMeSecure123!@10.57.0.3:5432/ideaboard"
     - name: CORS_ORIGINS
       value: "https://simpletwist.dpdns.org"
     - name: ENVIRONMENT

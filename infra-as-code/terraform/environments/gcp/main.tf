@@ -1,8 +1,8 @@
 terraform {
-  backend "gcs" {
-    bucket = "idea-board-terraform-state-reborg"
-    prefix  = "terraform/state"
-  }
+  # backend "gcs" {
+  #   bucket = "idea-board-terraform-state-reborg"
+  #   prefix  = "terraform/state"
+  # }
 
   required_providers {
     google = {
@@ -33,8 +33,8 @@ resource "google_project_service" "enable_apis" {
     "sqladmin.googleapis.com"
   ])
   service = each.key
-  disable_on_destroy         = true
-  disable_dependent_services = true
+  disable_on_destroy         = false
+  disable_dependent_services = false
 }
 
 resource "time_sleep" "wait_for_api_activation" {
