@@ -1,24 +1,35 @@
 variable "project_id" {
-  default     = "mcs-gcp-test-1"
-  description = "Name of the GCp Project"
+  description = "Name of the GCP Project"
+  type        = string
 }
 
-variable "gcp_bucket" {
-  default = "egov-gcp-test-bucket"
+variable "enable_gcs_s3_compat" {
+  description = "Enable GCS S3-compatible access with HMAC keys"
+  type        = bool
+  default     = false
+}
+
+variable "gcs_bucket_name" {
+  description = "Name of the GCS bucket for S3-compatible access (optional)"
+  type        = string
+  default     = ""
 }
 
 variable "region" {
-  default     = "asia-south1"
-  description = "region"
+  description = "GCP region for resources"
+  type        = string
+  default     = "us-central1"
 }
 
 variable "zone" {
-  default = "asia-south1-a"
+  description = "GCP zone for resources"
+  type        = string
+  default     = "us-central1-a"
 }
 
 variable "env_name" {
-  default     = "gcp-test"
-  description = "Name of the env"
+  description = "Environment name (e.g., dev, staging, prod)"
+  type        = string
 }
 
 variable "private_subnet_cidr" {
@@ -36,23 +47,33 @@ variable "gke_version" {
 }
 
 variable "node_machine_type" {
-  default = "n2d-highmem-2" #"n2-highmem-2"
+  description = "GKE node machine type"
+  type        = string
+  default     = "e2-medium"
 }
 
 variable "desired_node_count" {
-  default = "3"
+  description = "Desired number of GKE nodes"
+  type        = number
+  default     = 2
 }
 
 variable "min_node_count" {
-  default = "3"
+  description = "Minimum number of GKE nodes"
+  type        = number
+  default     = 1
 }
 
 variable "max_node_count" {
-  default = "3"
+  description = "Maximum number of GKE nodes"
+  type        = number
+  default     = 3
 }
 
 variable "node_disk_size_gb" {
-  default = "50"
+  description = "Disk size in GB for GKE nodes"
+  type        = number
+  default     = 30
 }
 
 variable "db_instance_tier" {
@@ -68,15 +89,25 @@ variable "db_max_connections" {
 }
 
 variable "db_name" {
-  default = "gcptestdb"
+  description = "Database name"
+  type        = string
+  default     = "ideaboard"
 }
 
 variable "db_username" {
-  default = "gcptest"
+  description = "Database username"
+  type        = string
+  default     = "ideaboard"
 }
 
-variable "db_password" {}
+variable "db_password" {
+  description = "Database password"
+  type        = string
+  sensitive   = true
+}
 
 variable "force_peering_cleanup" {
-  default = false
+  description = "Force cleanup of VPC peering on destroy"
+  type        = bool
+  default     = false
 }

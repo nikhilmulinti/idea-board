@@ -51,4 +51,4 @@ terraform.tfvars
 *.tfplan
 
 # Misc
-.cache/
+.cache/terraform-gcp-key.json

@@ -1,6 +1,6 @@
 terraform {
   backend "gcs" {
-    bucket = "egov-gcp-test-bucket"  # Replace with the name after creating remote state bucket
+    bucket = "idea-board-terraform-state-reborg"
     prefix  = "terraform/state"
   }
 
@@ -19,6 +19,7 @@ terraform {
 }
 
 provider "google" {
+  credentials = file("../../../../terraform-gcp-key.json")
   project = var.project_id
   region  = var.region
   zone    = var.zone
@@ -43,25 +44,29 @@ resource "time_sleep" "wait_for_api_activation" {
 }
 
 resource "google_service_account" "s3_app_user" {
+  count        = var.enable_gcs_s3_compat ? 1 : 0
   account_id   = "${var.env_name}-s3-client"
   display_name = "S3-compatible access for AWS SDK app"
 }
 
 resource "google_storage_bucket_iam_member" "writer" {
-  bucket = "egov-gcp-test-bucket"
+  count  = var.enable_gcs_s3_compat && var.gcs_bucket_name != "" ? 1 : 0
+  bucket = var.gcs_bucket_name
   role   = "roles/storage.objectAdmin"
-  member = "serviceAccount:${google_service_account.s3_app_user.email}"
+  member = "serviceAccount:${google_service_account.s3_app_user[0].email}"
 }
 
 resource "null_resource" "generate_hmac_key" {
+  count = var.enable_gcs_s3_compat ? 1 : 0
+
   provisioner "local-exec" {
     command = <<EOT
       gcloud iam service-accounts keys create ./hmac-key.json \
-        --iam-account=${google_service_account.s3_app_user.email} \
+        --iam-account=${google_service_account.s3_app_user[0].email} \
         --project=${var.project_id}
 
       gcloud storage hmac create \
-        ${google_service_account.s3_app_user.email} \
+        ${google_service_account.s3_app_user[0].email} \
         --project=${var.project_id} \
         --format=json > ./gcs-hmac-key.json
     EOT

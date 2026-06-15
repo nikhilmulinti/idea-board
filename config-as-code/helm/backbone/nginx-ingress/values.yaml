@@ -1,0 +1,57 @@
+ingress-nginx:
+  controller:
+    service:
+      type: LoadBalancer
+      annotations:
+        # GCP specific annotations
+        cloud.google.com/load-balancer-type: "External"
+      externalTrafficPolicy: Local
+
+    # Resource limits
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+    # Replicas for HA
+    replicaCount: 2
+
+    # Pod Anti-affinity for HA
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                - ingress-nginx
+            topologyKey: kubernetes.io/hostname
+
+    # Metrics for monitoring
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: false  # Enable if using Prometheus Operator
+
+    # Config for better performance
+    config:
+      use-forwarded-headers: "true"
+      compute-full-forwarded-for: "true"
+      use-proxy-protocol: "false"
+      ssl-redirect: "false"  # Will be handled per ingress
+
+    # Admission webhooks
+    admissionWebhooks:
+      enabled: true
+      failurePolicy: Fail
+
+  # Default backend
+  defaultBackend:
+    enabled: true
+    replicaCount: 1

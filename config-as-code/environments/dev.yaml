@@ -1,6 +1,6 @@
 global:
-  domain: idea-board-dev.example.com
-  namespace: idea-board-dev
+  domain: simpletwist.dpdns.org
+  namespace: idea-board
   environment: development
 
 backend:
@@ -13,9 +13,9 @@ backend:
 
   env: |
     - name: DATABASE_URL
-      value: "postgresql://ideauser:ideapass@postgres-dev:5432/ideaboard_dev"
+      value: "postgresql://ideauser:ChangeMeSecure123!@10.238.0.3:5432/ideaboard"
     - name: CORS_ORIGINS
-      value: "https://idea-board-dev.example.com"
+      value: "https://simpletwist.dpdns.org"
     - name: ENVIRONMENT
       value: "development"
     - name: DEBUG
@@ -41,7 +41,7 @@ frontend:
 
   env: |
     - name: REACT_APP_API_URL
-      value: "https://idea-board-dev.example.com/api"
+      value: "https://simpletwist.dpdns.org/api"
     - name: REACT_APP_ENVIRONMENT
       value: "development"
     - name: REACT_APP_DEBUG
@@ -51,10 +51,10 @@ frontend:
     enabled: true
     className: nginx
     annotations:
-      cert-manager.io/cluster-issuer: "letsencrypt-staging"
-      nginx.ingress.kubernetes.io/ssl-redirect: "false"
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
     hosts:
-      - host: idea-board-dev.example.com
+      - host: simpletwist.dpdns.org
         paths:
           - path: /
             pathType: Prefix
@@ -62,9 +62,9 @@ frontend:
             pathType: Prefix
             backend: idea-board-backend
     tls:
-      - secretName: idea-board-dev-tls
+      - secretName: simpletwist-tls
         hosts:
-          - idea-board-dev.example.com
+          - simpletwist.dpdns.org
 
   resources:
     limits:
@@ -75,7 +75,7 @@ frontend:
       memory: 64Mi
 
 postgresql:
-  enabled: true
+  enabled: false  # Using Cloud SQL instead
   auth:
     postgresPassword: postgres
     username: ideauser
