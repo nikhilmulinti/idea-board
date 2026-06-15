@@ -51,4 +51,10 @@ terraform.tfvars
 *.tfplan
 
 # Misc
-.cache/terraform-gcp-key.json
+.cache/
+
+# GCP Credentials - NEVER commit these
+terraform-gcp-key.json
+**/hmac-key.json
+**/gcs-hmac-key.json
+**/*-key.json
