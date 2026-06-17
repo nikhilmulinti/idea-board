@@ -3,6 +3,14 @@ kind: Application
 metadata:
   name: frontend
   namespace: argocd
+  annotations:
+    # ArgoCD Image Updater annotations
+    argocd-image-updater.argoproj.io/image-list: frontend=ghcr.io/nikhilmulinti/idea-board-frontend
+    argocd-image-updater.argoproj.io/frontend.update-strategy: latest
+    argocd-image-updater.argoproj.io/frontend.helm.image-name: image.repository
+    argocd-image-updater.argoproj.io/frontend.helm.image-tag: image.tag
+    argocd-image-updater.argoproj.io/write-back-method: git
+    argocd-image-updater.argoproj.io/git-branch: main
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
