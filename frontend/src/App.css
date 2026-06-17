@@ -3,6 +3,21 @@
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .App-header {
   padding: 2rem;
   text-align: center;

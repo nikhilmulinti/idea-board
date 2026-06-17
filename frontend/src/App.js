@@ -42,8 +42,8 @@ function App() {
     <div className="App">
       <header className="App-header">
         <h1>💡 Idea Board - GitOps Demo</h1>
-        <div style={{backgroundColor: '#4CAF50', padding: '8px', borderRadius: '5px', marginTop: '10px', fontSize: '14px'}}>
-          🚀 Deployed via ArgoCD | Auto-Sync Enabled | v2.0
+        <div style={{backgroundColor: '#2196F3', padding: '10px', borderRadius: '5px', marginTop: '10px', fontSize: '14px', animation: 'pulse 2s infinite'}}>
+          🚀 Deployed via ArgoCD | Auto-Sync Enabled | v3.0 | {new Date().toLocaleTimeString()}
         </div>
       </header>
 
