@@ -59,7 +59,12 @@ releases:
       - controller:
           service:
             type: LoadBalancer
+            # Cloud-specific annotations can be added via environment values
+            {{- if .Values.ingress }}
+            {{- if .Values.ingress.annotations }}
             annotations:
-              service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: /healthz
+              {{- toYaml .Values.ingress.annotations | nindent 14 }}
+            {{- end }}
+            {{- end }}
           metrics:
             enabled: true

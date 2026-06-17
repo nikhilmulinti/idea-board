@@ -16,3 +16,21 @@ postgresql:
   database: ideaboard
   username: dbadmin
   password: "ngdev@2024#"
+
+# Cloud-specific configurations
+# Uncomment and modify based on your cloud provider
+
+# For Azure:
+ingress:
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: /healthz
+
+# For AWS:
+# ingress:
+#   annotations:
+#     service.beta.kubernetes.io/aws-load-balancer-type: nlb
+
+# For GCP:
+# ingress:
+#   annotations:
+#     cloud.google.com/load-balancer-type: External
