@@ -1,56 +1,62 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Chart.Name }}
-  namespace: {{ .Values.namespace }}
+  name: {{ include "frontend.fullname" . }}
   labels:
-    app: {{ .Chart.Name }}
-    version: {{ .Chart.AppVersion }}
+    {{- include "frontend.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicas }}
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
-      app: {{ .Chart.Name }}
+      {{- include "frontend.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       labels:
-        app: {{ .Chart.Name }}
-        version: {{ .Chart.AppVersion }}
+        {{- include "frontend.selectorLabels" . | nindent 8 }}
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-      - name: {{ .Chart.Name }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
-        ports:
-        - containerPort: {{ .Values.service.targetPort }}
-          name: http
-          protocol: {{ .Values.service.protocol }}
-        {{- if .Values.healthChecks.enabled }}
-        livenessProbe:
-          httpGet:
-            path: {{ .Values.healthChecks.liveness.path }}
-            port: http
-          initialDelaySeconds: {{ .Values.healthChecks.liveness.initialDelaySeconds }}
-          periodSeconds: {{ .Values.healthChecks.liveness.periodSeconds }}
-          timeoutSeconds: {{ .Values.healthChecks.liveness.timeoutSeconds }}
-          successThreshold: {{ .Values.healthChecks.liveness.successThreshold }}
-          failureThreshold: {{ .Values.healthChecks.liveness.failureThreshold }}
-        readinessProbe:
-          httpGet:
-            path: {{ .Values.healthChecks.readiness.path }}
-            port: http
-          initialDelaySeconds: {{ .Values.healthChecks.readiness.initialDelaySeconds }}
-          periodSeconds: {{ .Values.healthChecks.readiness.periodSeconds }}
-          timeoutSeconds: {{ .Values.healthChecks.readiness.timeoutSeconds }}
-          successThreshold: {{ .Values.healthChecks.readiness.successThreshold }}
-          failureThreshold: {{ .Values.healthChecks.readiness.failureThreshold }}
-        {{- end }}
-        env:
-{{- if .Values.env }}
-{{ .Values.env | indent 8 }}
-{{- end }}
-        resources:
-          {{- toYaml .Values.resources | nindent 10 }}
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          env:
+            - name: REACT_APP_API_URL
+              value: {{ .Values.env.REACT_APP_API_URL | quote }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "frontend.fullname" . }}-config
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

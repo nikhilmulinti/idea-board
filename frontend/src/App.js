@@ -15,7 +15,7 @@ function App() {
 
   const fetchIdeas = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/ideas`);
+      const response = await axios.get(`${API_URL}/ideas`);
       setIdeas(response.data);
     } catch (error) {
       console.error('Error fetching ideas:', error);
@@ -28,7 +28,7 @@ function App() {
 
     setLoading(true);
     try {
-      await axios.post(`${API_URL}/api/ideas`, { content: newIdea });
+      await axios.post(`${API_URL}/ideas`, { content: newIdea });
       setNewIdea('');
       fetchIdeas();
     } catch (error) {

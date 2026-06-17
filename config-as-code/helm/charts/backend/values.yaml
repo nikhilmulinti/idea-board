@@ -1,17 +1,44 @@
-namespace: idea-board
+replicaCount: 2
 
-replicas: 1
-appType: backend
 image:
   repository: ghcr.io/nikhilmulinti/idea-board-backend
-  tag: latest
   pullPolicy: Always
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
 
 service:
   type: ClusterIP
   port: 8000
   targetPort: 8000
-  protocol: TCP
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: simpletwist.dpdns.org
+      paths:
+        - path: /api
+          pathType: Prefix
+  tls:
+    - secretName: simpletwist-api-tls
+      hosts:
+        - simpletwist.dpdns.org
 
 resources:
   limits:
@@ -23,45 +50,21 @@ resources:
 
 autoscaling:
   enabled: false
-  minReplicas: 1
-  maxReplicas: 3
+  minReplicas: 2
+  maxReplicas: 10
   targetCPUUtilizationPercentage: 80
 
-env: |
-  - name: DATABASE_URL
-    valueFrom:
-      secretKeyRef:
-        name: idea-board-secrets
-        key: database-url
-  - name: CORS_ORIGINS
-    value: "*"
-  - name: ENVIRONMENT
-    value: "production"
+nodeSelector: {}
 
-healthChecks:
-  enabled: true
-  liveness:
-    path: /health
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    successThreshold: 1
-    failureThreshold: 3
-  readiness:
-    path: /health
-    initialDelaySeconds: 10
-    periodSeconds: 5
-    timeoutSeconds: 3
-    successThreshold: 1
-    failureThreshold: 3
+tolerations: []
 
-configMap:
-  enabled: false
+affinity: {}
+
+env:
+  DATABASE_HOST: ng-central-dev-server.postgres.database.azure.com
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: ng-central-dev-db
+  DATABASE_USER: ngadmin
 
 secrets:
-  enabled: true
-  name: idea-board-secrets
-
-nodeSelector: {}
-tolerations: []
-affinity: {}
+  DATABASE_PASSWORD: "ngdev@2024#"

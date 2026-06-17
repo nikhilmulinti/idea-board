@@ -32,7 +32,7 @@ class IdeaResponse(BaseModel):
     class Config:
         from_attributes = True
 
-app = FastAPI(title="Idea Board API")
+app = FastAPI(title="Idea Board API", root_path="/api")
 
 app.add_middleware(
     CORSMiddleware,
@@ -50,7 +50,7 @@ def startup_event():
 def health_check():
     return {"status": "healthy"}
 
-@app.get("/api/ideas", response_model=List[IdeaResponse])
+@app.get("/ideas", response_model=List[IdeaResponse])
 def get_ideas():
     db = SessionLocal()
     try:
@@ -59,7 +59,7 @@ def get_ideas():
     finally:
         db.close()
 
-@app.post("/api/ideas", response_model=IdeaResponse)
+@app.post("/ideas", response_model=IdeaResponse)
 def create_idea(idea: IdeaCreate):
     if not idea.content.strip():
         raise HTTPException(status_code=400, detail="Idea content cannot be empty")

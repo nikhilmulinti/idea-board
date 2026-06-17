@@ -1,17 +1,44 @@
-namespace: idea-board
+replicaCount: 2
 
-replicas: 1
-appType: frontend
 image:
   repository: ghcr.io/nikhilmulinti/idea-board-frontend
-  tag: latest
   pullPolicy: Always
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
 
 service:
   type: ClusterIP
   port: 80
   targetPort: 80
-  protocol: TCP
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: simpletwist.dpdns.org
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: simpletwist-tls
+      hosts:
+        - simpletwist.dpdns.org
 
 resources:
   limits:
@@ -23,52 +50,15 @@ resources:
 
 autoscaling:
   enabled: false
-  minReplicas: 1
-  maxReplicas: 3
+  minReplicas: 2
+  maxReplicas: 10
   targetCPUUtilizationPercentage: 80
 
-ingress:
-  enabled: true
-  className: nginx
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-  hosts:
-    - host: idea-board.example.com
-      paths:
-        - path: /
-          pathType: Prefix
-  tls:
-    - secretName: idea-board-tls
-      hosts:
-        - idea-board.example.com
-
-env: |
-  - name: REACT_APP_API_URL
-    value: "https://idea-board.example.com/api"
-  - name: REACT_APP_ENVIRONMENT
-    value: "production"
-
-healthChecks:
-  enabled: true
-  liveness:
-    path: /
-    initialDelaySeconds: 15
-    periodSeconds: 10
-    timeoutSeconds: 5
-    successThreshold: 1
-    failureThreshold: 3
-  readiness:
-    path: /
-    initialDelaySeconds: 5
-    periodSeconds: 5
-    timeoutSeconds: 3
-    successThreshold: 1
-    failureThreshold: 3
-
-configMap:
-  enabled: false
-
 nodeSelector: {}
+
 tolerations: []
+
 affinity: {}
+
+env:
+  REACT_APP_API_URL: "https://simpletwist.dpdns.org/api"
