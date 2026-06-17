@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frontend
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/nikhilmulinti/idea-board
+    targetRevision: main
+    path: config-as-code/helm/charts/frontend
+    helm:
+      releaseName: frontend
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: image.tag
+          value: "latest"
+        - name: replicaCount
+          value: "2"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ideaboard
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

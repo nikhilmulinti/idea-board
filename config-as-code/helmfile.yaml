@@ -1,0 +1,46 @@
+---
+# Helmfile for managing Idea Board application deployments
+releases:
+  # Backend service
+  - name: backend
+    namespace: ideaboard
+    createNamespace: true
+    chart: ./helm/charts/backend
+    values:
+      - helm/charts/backend/values.yaml
+      - environments/values.yaml
+    wait: true
+    timeout: 300
+    atomic: true
+    hooks:
+      - events: ["prepare"]
+        showlogs: true
+        command: "echo"
+        args: ["Deploying backend service..."]
+
+  # Frontend service
+  - name: frontend
+    namespace: ideaboard
+    createNamespace: true
+    chart: ./helm/charts/frontend
+    values:
+      - helm/charts/frontend/values.yaml
+      - environments/values.yaml
+    needs:
+      - ideaboard/backend  # Ensure backend is deployed first
+    wait: true
+    timeout: 300
+    atomic: true
+    hooks:
+      - events: ["prepare"]
+        showlogs: true
+        command: "echo"
+        args: ["Deploying frontend service..."]
+
+# Global settings
+helmDefaults:
+  wait: true
+  timeout: 300
+  recreatePods: false
+  force: false
+  createNamespace: true
