@@ -3,7 +3,7 @@ replicaCount: 2
 image:
   repository: ghcr.io/nikhilmulinti/idea-board-frontend
   pullPolicy: Always
-  tag: "latest"
+  tag: "main-3e78e73"  # Will be auto-updated by ArgoCD Image Updater
 
 imagePullSecrets: []
 nameOverride: ""

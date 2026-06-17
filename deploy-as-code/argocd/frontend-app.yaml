@@ -7,10 +7,10 @@ metadata:
     # ArgoCD Image Updater annotations
     argocd-image-updater.argoproj.io/image-list: frontend=ghcr.io/nikhilmulinti/idea-board-frontend
     argocd-image-updater.argoproj.io/frontend.update-strategy: latest
+    argocd-image-updater.argoproj.io/frontend.allow-tags: "main-*"  # Only track main-<sha> tags
     argocd-image-updater.argoproj.io/frontend.helm.image-name: image.repository
     argocd-image-updater.argoproj.io/frontend.helm.image-tag: image.tag
-    argocd-image-updater.argoproj.io/write-back-method: git
-    argocd-image-updater.argoproj.io/git-branch: main
+    argocd-image-updater.argoproj.io/write-back-method: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
