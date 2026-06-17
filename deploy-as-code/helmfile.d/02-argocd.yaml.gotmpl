@@ -1,0 +1,64 @@
+# ArgoCD and Image Updater
+
+environments:
+  dev:
+    values:
+      - ../environments/dev.yaml
+
+---
+
+repositories:
+  - name: argo
+    url: https://argoproj.github.io/argo-helm
+
+releases:
+  # ArgoCD
+  - name: argocd
+    namespace: argocd
+    chart: argo/argo-cd
+    version: 5.51.4
+    createNamespace: true
+    values:
+      - server:
+          ingress:
+            enabled: true
+            ingressClassName: nginx
+            annotations:
+              cert-manager.io/cluster-issuer: letsencrypt-prod
+              nginx.ingress.kubernetes.io/ssl-redirect: "true"
+              nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+            hosts:
+              - {{ .Values.argocd.host }}
+            tls:
+              - secretName: argocd-server-tls
+                hosts:
+                  - {{ .Values.argocd.host }}
+          extraArgs:
+            - --insecure
+        redis:
+          enabled: true
+        dex:
+          enabled: false
+        notifications:
+          enabled: false
+        applicationSet:
+          enabled: true
+
+  # ArgoCD Image Updater
+  - name: argocd-image-updater
+    namespace: argocd
+    chart: argo/argocd-image-updater
+    version: 0.9.1
+    needs:
+      - argocd/argocd
+    values:
+      - config:
+          registries:
+            - name: GitHub Container Registry
+              prefix: ghcr.io
+              api_url: https://ghcr.io
+              defaultns: library
+          argocd:
+            grpcWeb: true
+            serverAddress: "argocd-server.argocd"
+            insecure: true

@@ -1,0 +1,17 @@
+# Default values for argocd-app
+name: ""
+namespace: ""
+repoURL: ""
+targetRevision: main
+path: ""
+
+helm:
+  releaseName: ""
+  valueFiles: []
+  parameters: []
+
+imageUpdater:
+  enabled: false
+  image: ""
+  updateStrategy: latest
+  allowTags: ""

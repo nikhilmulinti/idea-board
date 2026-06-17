@@ -1,0 +1,54 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.name }}
+  namespace: argocd
+  {{- if .Values.imageUpdater.enabled }}
+  annotations:
+    argocd-image-updater.argoproj.io/image-list: {{ .Values.name }}={{ .Values.imageUpdater.image }}
+    argocd-image-updater.argoproj.io/{{ .Values.name }}.update-strategy: {{ .Values.imageUpdater.updateStrategy }}
+    argocd-image-updater.argoproj.io/{{ .Values.name }}.allow-tags: {{ .Values.imageUpdater.allowTags }}
+    argocd-image-updater.argoproj.io/{{ .Values.name }}.helm.image-name: image.repository
+    argocd-image-updater.argoproj.io/{{ .Values.name }}.helm.image-tag: image.tag
+    argocd-image-updater.argoproj.io/write-back-method: argocd
+  {{- end }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: {{ .Values.repoURL }}
+    targetRevision: {{ .Values.targetRevision }}
+    path: {{ .Values.path }}
+    {{- if .Values.helm }}
+    helm:
+      releaseName: {{ .Values.helm.releaseName }}
+      {{- if .Values.helm.valueFiles }}
+      valueFiles:
+      {{- range .Values.helm.valueFiles }}
+        - {{ . }}
+      {{- end }}
+      {{- end }}
+      {{- if .Values.helm.parameters }}
+      parameters:
+      {{- range .Values.helm.parameters }}
+        - name: {{ .name }}
+          value: {{ .value | quote }}
+      {{- end }}
+      {{- end }}
+    {{- end }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .Values.namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

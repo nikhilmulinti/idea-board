@@ -1,0 +1,199 @@
+environments:
+  dev:
+    values:
+      - environments/dev.yaml
+
+---
+
+helmDefaults:
+  atomic: true
+  cleanupOnFail: true
+  wait: true
+  timeout: 600
+  createNamespace: true
+
+repositories:
+  - name: jetstack
+    url: https://charts.jetstack.io
+  - name: ingress-nginx
+    url: https://kubernetes.github.io/ingress-nginx
+  - name: argo
+    url: https://argoproj.github.io/argo-helm
+
+releases:
+  # 1. cert-manager - SSL certificate management
+  - name: cert-manager
+    namespace: cert-manager
+    chart: jetstack/cert-manager
+    version: v1.13.2
+    values:
+      - installCRDs: true
+    hooks:
+      - events: ["postsync"]
+        showlogs: true
+        command: "sh"
+        args:
+          - "-c"
+          - |
+            kubectl apply -f - <<EOF
+            apiVersion: cert-manager.io/v1
+            kind: ClusterIssuer
+            metadata:
+              name: letsencrypt-prod
+            spec:
+              acme:
+                server: https://acme-v02.api.letsencrypt.org/directory
+                email: {{ .Values.letsencrypt.email }}
+                privateKeySecretRef:
+                  name: letsencrypt-prod
+                solvers:
+                - http01:
+                    ingress:
+                      class: nginx
+            EOF
+
+  # 2. NGINX Ingress Controller
+  - name: ingress-nginx
+    namespace: ingress-nginx
+    chart: ingress-nginx/ingress-nginx
+    version: 4.8.3
+    needs:
+      - cert-manager/cert-manager
+    values:
+      - controller:
+          service:
+            type: LoadBalancer
+            annotations:
+              service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: /healthz
+          metrics:
+            enabled: true
+          podSecurityPolicy:
+            enabled: false
+
+  # 3. ArgoCD - GitOps continuous deployment
+  - name: argocd
+    namespace: argocd
+    chart: argo/argo-cd
+    version: 5.51.4
+    needs:
+      - ingress-nginx/ingress-nginx
+    values:
+      - server:
+          ingress:
+            enabled: true
+            ingressClassName: nginx
+            annotations:
+              cert-manager.io/cluster-issuer: letsencrypt-prod
+              nginx.ingress.kubernetes.io/ssl-redirect: "true"
+              nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+            hosts:
+              - {{ .Values.argocd.host }}
+            tls:
+              - secretName: argocd-server-tls
+                hosts:
+                  - {{ .Values.argocd.host }}
+          extraArgs:
+            - --insecure
+          metrics:
+            enabled: true
+        redis:
+          enabled: true
+        dex:
+          enabled: false
+        notifications:
+          enabled: false
+        applicationSet:
+          enabled: true
+        repoServer:
+          autoscaling:
+            enabled: true
+            minReplicas: 1
+            maxReplicas: 5
+
+  # 4. ArgoCD Image Updater - Automatic image updates
+  - name: argocd-image-updater
+    namespace: argocd
+    chart: argo/argocd-image-updater
+    version: 0.9.1
+    needs:
+      - argocd/argocd
+    values:
+      - config:
+          registries:
+            - name: GitHub Container Registry
+              prefix: ghcr.io
+              api_url: https://ghcr.io
+              credentials: pullsecret:argocd/github-registry-secret
+              defaultns: library
+          argocd:
+            grpcWeb: true
+            serverAddress: "argocd-server.argocd"
+            insecure: true
+        metrics:
+          enabled: true
+
+  # 5. Backend Application (via ArgoCD)
+  - name: backend-app
+    namespace: argocd
+    chart: ./charts/argocd-app
+    needs:
+      - argocd/argocd
+      - argocd/argocd-image-updater
+    values:
+      - name: backend
+        namespace: ideaboard
+        repoURL: {{ .Values.github.repo }}
+        targetRevision: main
+        path: config-as-code/helm/charts/backend
+        helm:
+          releaseName: backend
+          valueFiles:
+            - values.yaml
+          parameters:
+            - name: replicaCount
+              value: "2"
+            - name: ingress.host
+              value: {{ .Values.app.host }}
+            - name: postgresql.host
+              value: {{ .Values.postgresql.host }}
+            - name: postgresql.database
+              value: {{ .Values.postgresql.database }}
+            - name: postgresql.username
+              value: {{ .Values.postgresql.username }}
+            - name: postgresql.password
+              value: {{ .Values.postgresql.password }}
+        imageUpdater:
+          enabled: true
+          image: ghcr.io/nikhilmulinti/idea-board-backend
+          updateStrategy: latest
+          allowTags: "regexp:^main-.*$"
+
+  # 6. Frontend Application (via ArgoCD)
+  - name: frontend-app
+    namespace: argocd
+    chart: ./charts/argocd-app
+    needs:
+      - argocd/argocd
+      - argocd/argocd-image-updater
+    values:
+      - name: frontend
+        namespace: ideaboard
+        repoURL: {{ .Values.github.repo }}
+        targetRevision: main
+        path: config-as-code/helm/charts/frontend
+        helm:
+          releaseName: frontend
+          valueFiles:
+            - values.yaml
+          parameters:
+            - name: replicaCount
+              value: "2"
+            - name: ingress.host
+              value: {{ .Values.app.host }}
+            - name: env.REACT_APP_API_URL
+              value: https://{{ .Values.app.host }}
+        imageUpdater:
+          enabled: true
+          image: ghcr.io/nikhilmulinti/idea-board-frontend
+          updateStrategy: latest
+          allowTags: "regexp:^main-.*$"

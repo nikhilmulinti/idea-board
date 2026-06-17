@@ -1,0 +1,69 @@
+# Application Deployments via ArgoCD
+
+environments:
+  dev:
+    values:
+      - ../environments/dev.yaml
+
+---
+
+releases:
+  # Backend Application
+  - name: backend-app
+    namespace: argocd
+    chart: ../charts/argocd-app
+    values:
+      - name: backend
+        namespace: ideaboard
+        repoURL: {{ .Values.github.repo }}
+        targetRevision: main
+        path: config-as-code/helm/charts/backend
+        helm:
+          releaseName: backend
+          valueFiles:
+            - values.yaml
+          parameters:
+            - name: replicaCount
+              value: "2"
+            - name: ingress.host
+              value: {{ .Values.app.host }}
+            - name: postgresql.host
+              value: {{ .Values.postgresql.host }}
+            - name: postgresql.database
+              value: {{ .Values.postgresql.database }}
+            - name: postgresql.username
+              value: {{ .Values.postgresql.username }}
+            - name: postgresql.password
+              value: {{ .Values.postgresql.password }}
+        imageUpdater:
+          enabled: true
+          image: ghcr.io/nikhilmulinti/idea-board-backend
+          updateStrategy: latest
+          allowTags: "regexp:^main-.*$"
+
+  # Frontend Application
+  - name: frontend-app
+    namespace: argocd
+    chart: ../charts/argocd-app
+    values:
+      - name: frontend
+        namespace: ideaboard
+        repoURL: {{ .Values.github.repo }}
+        targetRevision: main
+        path: config-as-code/helm/charts/frontend
+        helm:
+          releaseName: frontend
+          valueFiles:
+            - values.yaml
+          parameters:
+            - name: replicaCount
+              value: "2"
+            - name: ingress.host
+              value: {{ .Values.app.host }}
+            - name: env.REACT_APP_API_URL
+              value: https://{{ .Values.app.host }}
+        imageUpdater:
+          enabled: true
+          image: ghcr.io/nikhilmulinti/idea-board-frontend
+          updateStrategy: latest
+          allowTags: "regexp:^main-.*$"

@@ -1,0 +1,18 @@
+# Development Environment Configuration
+letsencrypt:
+  email: nikhil.mulinti@gmail.com
+
+argocd:
+  host: argocd.simpletwist.dpdns.org
+
+app:
+  host: simpletwist.dpdns.org
+
+github:
+  repo: https://github.com/nikhilmulinti/idea-board
+
+postgresql:
+  host: ng-central-dev-server.postgres.database.azure.com
+  database: ideaboard
+  username: dbadmin
+  password: "ngdev@2024#"
