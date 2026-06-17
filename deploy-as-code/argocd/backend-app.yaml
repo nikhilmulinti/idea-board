@@ -25,10 +25,9 @@ spec:
         - values.yaml
       # Override values for different environments
       parameters:
-        - name: image.tag
-          value: "latest"
         - name: replicaCount
           value: "2"
+        # image.tag removed - now managed by values.yaml and Image Updater
   destination:
     server: https://kubernetes.default.svc
     namespace: ideaboard
