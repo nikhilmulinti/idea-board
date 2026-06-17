@@ -41,9 +41,9 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>🚀 Idea Board - v4.0 LIVE!</h1>
-        <div style={{backgroundColor: '#FF5722', padding: '12px', borderRadius: '8px', marginTop: '10px', fontSize: '16px', animation: 'pulse 2s infinite', border: '2px solid white'}}>
-          ⚡ GitOps Auto-Deploy Working! | v4.0 | Deployed at: {new Date().toLocaleTimeString()}
+        <h1>🚀 Idea Board - v4.1 GitOps!</h1>
+        <div style={{backgroundColor: '#9C27B0', padding: '12px', borderRadius: '8px', marginTop: '10px', fontSize: '16px', animation: 'pulse 2s infinite', border: '2px solid white'}}>
+          ⚡ Single-Platform Build | v4.1 | Auto-Deploy: {new Date().toLocaleTimeString()}
         </div>
         <div style={{marginTop: '10px', fontSize: '12px', opacity: '0.8'}}>
           Commit SHA: {process.env.REACT_APP_GIT_SHA || 'development'}

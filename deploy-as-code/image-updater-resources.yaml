@@ -1,0 +1,31 @@
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: frontend-updater
+  namespace: argocd
+spec:
+  applications:
+    - name: frontend
+      namespace: argocd
+  images:
+    - image: ghcr.io/nikhilmulinti/idea-board-frontend
+      updateStrategy: latest
+      allowTags: "main-*"
+      helmParamName: image.tag
+  interval: 2m
+---
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: backend-updater
+  namespace: argocd
+spec:
+  applications:
+    - name: backend
+      namespace: argocd
+  images:
+    - image: ghcr.io/nikhilmulinti/idea-board-backend
+      updateStrategy: latest
+      allowTags: "main-*"
+      helmParamName: image.tag
+  interval: 2m
