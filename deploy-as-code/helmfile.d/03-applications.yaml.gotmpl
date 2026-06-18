@@ -61,7 +61,7 @@ releases:
             - name: ingress.host
               value: {{ .Values.app.host }}
             - name: env.REACT_APP_API_URL
-              value: https://{{ .Values.app.host }}
+              value: https://{{ .Values.app.host }}/api
         imageUpdater:
           enabled: true
           image: ghcr.io/nikhilmulinti/idea-board-frontend

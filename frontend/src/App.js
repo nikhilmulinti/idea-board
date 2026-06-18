@@ -8,6 +8,7 @@ function App() {
   const [loading, setLoading] = useState(false);
 
   // Get API URL at component render time, not module load time
+  // Fixed: Evaluate after env-config.js loads
   const getApiUrl = () => {
     return window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000';
   };

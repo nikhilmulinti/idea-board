@@ -108,8 +108,10 @@ jobs:
           push: true
           tags: ${{ steps.meta-frontend.outputs.tags }}
           labels: ${{ steps.meta-frontend.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Disable cache for frontend to ensure fresh builds with runtime config
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
+          no-cache: true
 
   build-summary:
     runs-on: ubuntu-latest
