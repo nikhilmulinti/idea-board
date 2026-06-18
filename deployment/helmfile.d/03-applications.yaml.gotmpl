@@ -27,14 +27,14 @@ releases:
               value: "2"
             - name: ingress.host
               value: {{ .Values.app.host }}
-            - name: postgresql.host
+            - name: env.DATABASE_HOST
               value: {{ .Values.postgresql.host }}
-            - name: postgresql.database
+            - name: env.DATABASE_NAME
               value: {{ .Values.postgresql.database }}
-            - name: postgresql.username
+            - name: env.DATABASE_USER
               value: {{ .Values.postgresql.username }}
-            - name: postgresql.password
-              value: {{ .Values.postgresql.password }}
+            - name: secrets.DATABASE_PASSWORD
+              value: {{ .Values.postgresql.password | quote }}
         imageUpdater:
           enabled: true
           image: ghcr.io/nikhilmulinti/idea-board-backend
