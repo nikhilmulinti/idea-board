@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
-const API_URL = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000';
-
 function App() {
   const [ideas, setIdeas] = useState([]);
   const [newIdea, setNewIdea] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Get API URL at component render time, not module load time
+  const getApiUrl = () => {
+    return window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000';
+  };
 
   useEffect(() => {
     fetchIdeas();
@@ -15,6 +18,7 @@ function App() {
 
   const fetchIdeas = async () => {
     try {
+      const API_URL = getApiUrl();
       const response = await axios.get(`${API_URL}/ideas`);
       setIdeas(response.data);
     } catch (error) {
@@ -28,6 +32,7 @@ function App() {
 
     setLoading(true);
     try {
+      const API_URL = getApiUrl();
       await axios.post(`${API_URL}/ideas`, { content: newIdea });
       setNewIdea('');
       fetchIdeas();
