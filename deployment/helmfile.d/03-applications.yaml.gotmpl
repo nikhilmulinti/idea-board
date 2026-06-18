@@ -3,7 +3,7 @@
 environments:
   dev:
     values:
-      - ../environments/dev.yaml
+      - environments/dev.yaml
 
 ---
 
@@ -11,13 +11,13 @@ releases:
   # Backend Application
   - name: backend-app
     namespace: argocd
-    chart: ../charts/argocd-app
+    chart: charts/argocd-app
     values:
       - name: backend
         namespace: ideaboard
         repoURL: {{ .Values.github.repo }}
         targetRevision: main
-        path: config-as-code/helm/charts/backend
+        path: deployment/charts/backend
         helm:
           releaseName: backend
           valueFiles:
@@ -44,13 +44,13 @@ releases:
   # Frontend Application
   - name: frontend-app
     namespace: argocd
-    chart: ../charts/argocd-app
+    chart: charts/argocd-app
     values:
       - name: frontend
         namespace: ideaboard
         repoURL: {{ .Values.github.repo }}
         targetRevision: main
-        path: config-as-code/helm/charts/frontend
+        path: deployment/charts/frontend
         helm:
           releaseName: frontend
           valueFiles:
