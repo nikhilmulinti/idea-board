@@ -20,10 +20,21 @@ function App() {
   const fetchIdeas = async () => {
     try {
       const API_URL = getApiUrl();
+      console.log('Fetching from:', `${API_URL}/ideas`);
       const response = await axios.get(`${API_URL}/ideas`);
-      setIdeas(response.data);
+      console.log('Response:', response);
+
+      // Defensive: ensure we only set arrays
+      const data = response.data;
+      if (Array.isArray(data)) {
+        setIdeas(data);
+      } else {
+        console.error('API response is not an array:', data);
+        setIdeas([]);
+      }
     } catch (error) {
       console.error('Error fetching ideas:', error);
+      setIdeas([]); // Ensure ideas is always an array on error
     }
   };
 
@@ -75,7 +86,7 @@ function App() {
 
         <div className="ideas-list">
           <h2>All Ideas</h2>
-          {ideas.length === 0 ? (
+          {(!ideas || !Array.isArray(ideas) || ideas.length === 0) ? (
             <p>No ideas yet. Be the first to submit one!</p>
           ) : (
             <ul>
