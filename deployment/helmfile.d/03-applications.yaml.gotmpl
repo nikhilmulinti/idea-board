@@ -3,7 +3,7 @@
 environments:
   dev:
     values:
-      - environments/dev.yaml
+      - ../environments/dev.yaml
 
 ---
 
@@ -11,7 +11,7 @@ releases:
   # Backend Application
   - name: backend-app
     namespace: argocd
-    chart: charts/argocd-app
+    chart: ../charts/argocd-app
     values:
       - name: backend
         namespace: ideaboard
@@ -44,7 +44,7 @@ releases:
   # Frontend Application
   - name: frontend-app
     namespace: argocd
-    chart: charts/argocd-app
+    chart: ../charts/argocd-app
     values:
       - name: frontend
         namespace: ideaboard

@@ -58,7 +58,7 @@ helm plugin install https://github.com/databus23/helm-diff --verify=false
 ### 1. Clone Repository
 ```bash
 git clone https://github.com/nikhilmulinti/idea-board.git
-cd idea-board/deploy-as-code
+cd idea-board/deployment
 ```
 
 ### 2. Configure Environment
@@ -85,7 +85,7 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 
 ### Step 1: Prepare Environment File
 
-Create `environments/dev.yaml` with your configuration:
+Create `deployment/environments/dev.yaml` with your configuration:
 
 ```yaml
 # Domain Configuration
@@ -205,12 +205,21 @@ environments/
 └── production.yaml  # Production environment (optional)
 ```
 
-### Helmfile Structure
+### Deployment Structure
 ```
-helmfile.d/
-├── 01-infrastructure.yaml.gotmpl  # Base infrastructure
-├── 02-argocd.yaml.gotmpl         # GitOps platform
-└── 03-applications.yaml.gotmpl    # Application deployments
+deployment/
+├── helmfile.d/                    # Helmfile configurations
+│   ├── 01-infrastructure.yaml.gotmpl  # Base infrastructure
+│   ├── 02-argocd.yaml.gotmpl         # GitOps platform
+│   └── 03-applications.yaml.gotmpl    # Application deployments
+├── charts/                        # Helm charts
+│   ├── backend/                   # Backend application chart
+│   ├── frontend/                  # Frontend application chart
+│   └── argocd-app/               # ArgoCD application template
+├── environments/                  # Environment configurations
+│   └── dev.yaml                  # Development environment values
+└── docs/                         # Documentation
+    └── INSTALLATION.md           # This file
 ```
 
 ### Customization Options
