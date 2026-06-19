@@ -58,7 +58,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>🚀 Idea Board - Live Demo</h1>
+        <h1>🚀 IDEABOARD DEMO</h1>
         <div style={{backgroundColor: '#2196F3', padding: '12px', borderRadius: '8px', marginTop: '10px', fontSize: '16px', animation: 'pulse 2s infinite', border: '2px solid white'}}>
           🚀 Helmfile + GitOps | v6.0 | Auto-Deploy: {new Date().toLocaleTimeString()}
         </div>
