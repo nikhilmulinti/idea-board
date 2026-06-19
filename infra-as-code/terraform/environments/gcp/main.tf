@@ -19,7 +19,8 @@ terraform {
 }
 
 provider "google" {
-  credentials = file("../../../../terraform-gcp-key.json")
+  # Use environment variable GOOGLE_APPLICATION_CREDENTIALS or gcloud auth
+  # credentials = file("../../../../terraform-gcp-key.json")
   project = var.project_id
   region  = var.region
   zone    = var.zone

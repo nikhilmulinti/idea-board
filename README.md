@@ -53,13 +53,75 @@ docker-compose up --build
 
 ## ☁️ Cloud Deployment
 
-### Prerequisites
-- Kubernetes cluster (AKS, EKS, or GKE)
+### Option 1: Deploy on Google Cloud Platform (GCP)
+
+#### Prerequisites
+- GCP Account with billing enabled
+- gcloud CLI installed and configured
+- Terraform 1.3+ installed
+- kubectl, Helm 3.10+, and Helmfile 0.150+ installed
+
+#### Step 1: Provision GCP Infrastructure with Terraform
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/nikhilmulinti/idea-board.git
+cd idea-board
+
+# 2. Set up GCP authentication
+gcloud auth application-default login
+gcloud config set project reborg-studio-development
+
+# 3. Create Terraform state bucket (one-time setup)
+cd infra-as-code/terraform/remote-state/gcp
+terraform init
+terraform apply -auto-approve
+
+# 4. Provision the infrastructure
+cd ../../environments/gcp
+terraform init
+terraform plan
+terraform apply
+
+# 5. Get cluster credentials
+gcloud container clusters get-credentials idea-board-dev \
+  --region us-central1 \
+  --project reborg-studio-development
+```
+
+#### Step 2: Deploy Application with Helmfile
+
+```bash
+# 1. Navigate to deployment directory
+cd ../../../../deployment
+
+# 2. Configure your environment
+cp environments/dev.yaml.example environments/dev.yaml
+# Edit environments/dev.yaml with your values
+
+# 3. Deploy everything with Helmfile
+helmfile -e dev sync
+
+# 4. Get the LoadBalancer IP
+kubectl get svc -n ingress-nginx ingress-nginx-controller \
+  -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+
+# 5. Configure DNS to point to the LoadBalancer IP
+
+# 6. Access ArgoCD UI
+kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath="{.data.password}" | base64 -d
+```
+
+### Option 2: Using Existing Kubernetes Cluster
+
+#### Prerequisites
+- Kubernetes cluster already running
 - kubectl configured
 - Helm 3.10+
 - Helmfile 0.150+
 
-### Installation Steps
+#### Installation Steps
 
 ```bash
 # 1. Clone the repository
@@ -82,6 +144,54 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller \
 # 6. Access ArgoCD UI
 kubectl -n argocd get secret argocd-initial-admin-secret \
   -o jsonpath="{.data.password}" | base64 -d
+```
+
+## 🏗️ Infrastructure as Code (Terraform)
+
+### GCP Infrastructure Components
+
+The Terraform configuration provisions the following resources on GCP:
+
+- **GKE Cluster**: Managed Kubernetes with autoscaling (1-3 nodes)
+- **Cloud SQL**: PostgreSQL instance for persistent data
+- **VPC Network**: Custom network with private/public subnets
+- **Service Accounts**: For workload identity and access control
+- **Cloud Storage**: Optional S3-compatible bucket for backups
+
+### Terraform Configuration Files
+
+```
+infra-as-code/terraform/
+├── environments/gcp/
+│   ├── main.tf              # Main infrastructure definition
+│   ├── variables.tf         # Variable declarations
+│   ├── terraform.tfvars     # Environment-specific values
+│   └── modules/
+│       ├── networking/      # VPC and subnet configuration
+│       ├── db/             # Cloud SQL setup
+│       └── kubernetes/     # GKE cluster configuration
+└── remote-state/gcp/
+    ├── main.tf             # State bucket configuration
+    └── terraform.tfvars    # State bucket settings
+```
+
+### Customizing Infrastructure
+
+Edit `infra-as-code/terraform/environments/gcp/terraform.tfvars`:
+
+```hcl
+# Cluster Configuration
+project_id         = "your-gcp-project"
+region            = "us-central1"
+zone              = "us-central1-a"
+node_machine_type = "e2-medium"    # Change for different performance
+min_node_count    = 1               # Minimum cluster size
+max_node_count    = 5               # Maximum for autoscaling
+
+# Database Configuration
+db_instance_tier  = "db-f1-micro"   # Use db-g1-small for production
+db_disk_size_gb   = 10              # Increase for production
+db_password       = "ChangeMeSecure123!"  # MUST change for production
 ```
 
 ### Deployment Structure
@@ -220,6 +330,48 @@ docker-compose -f docker-compose.test.yml up
 - [Complete Installation Guide](deployment/docs/INSTALLATION.md)
 - [API Documentation](http://localhost:8000/docs) (when running)
 - [Troubleshooting Guide](deployment/docs/INSTALLATION.md#troubleshooting)
+
+## 🔧 Troubleshooting
+
+### GCP/Terraform Common Issues
+
+**Authentication Error:**
+```bash
+# If you see: "could not find default credentials"
+gcloud auth application-default login
+
+# Or use service account key
+export GOOGLE_APPLICATION_CREDENTIALS="path/to/key.json"
+```
+
+**API Not Enabled:**
+```bash
+# Enable required APIs manually if needed
+gcloud services enable compute.googleapis.com
+gcloud services enable container.googleapis.com
+gcloud services enable sqladmin.googleapis.com
+gcloud services enable servicenetworking.googleapis.com
+```
+
+**Terraform State Issues:**
+```bash
+# If state is locked
+terraform force-unlock <LOCK_ID>
+
+# Refresh state
+terraform refresh
+```
+
+**Cleanup Resources:**
+```bash
+# Destroy infrastructure (careful!)
+cd infra-as-code/terraform/environments/gcp
+terraform destroy
+
+# Remove Helmfile deployments
+cd deployment
+helmfile -e dev destroy
+```
 
 ## 🤝 Contributing
 
